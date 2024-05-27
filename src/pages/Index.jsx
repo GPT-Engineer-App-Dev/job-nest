@@ -1,14 +1,39 @@
-import { Box, Container, VStack, Text, Input, Button, HStack, Flex, Heading, Spacer, Link, SimpleGrid, GridItem } from "@chakra-ui/react";
+import { Box, Container, VStack, Text, Input, Button, HStack, Flex, Heading, Spacer, Link, SimpleGrid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, FormControl, FormLabel, Textarea } from "@chakra-ui/react";
 import { FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
 import { useEffect, useState } from "react";
 
 const Index = () => {
   const [jobs, setJobs] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applicantName, setApplicantName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [resume, setResume] = useState(null);
+  const [coverLetter, setCoverLetter] = useState("");
 
   useEffect(() => {
     const storedJobs = JSON.parse(localStorage.getItem("jobs")) || [];
     setJobs(storedJobs);
   }, []);
+
+  const openModal = (job) => {
+    setSelectedJob(job);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newApplication = { applicantName, email, phoneNumber, resume, coverLetter, jobId: selectedJob.id };
+    const existingApplications = JSON.parse(localStorage.getItem("applications")) || [];
+    localStorage.setItem("applications", JSON.stringify([...existingApplications, newApplication]));
+    closeModal();
+  };
 
   return (
     <Box>
@@ -44,11 +69,49 @@ const Index = () => {
                 <Text>Location: {job.location}</Text>
                 <Text mt="4">{job.jobDescription}</Text>
                 <Text mt="4">Contact: {job.contactEmail}</Text>
+                <Button colorScheme="teal" mt="4" onClick={() => openModal(job)}>Apply</Button>
               </Box>
             </GridItem>
           ))}
         </SimpleGrid>
       </Container>
+
+      {/* Modal for Job Application */}
+      <Modal isOpen={isModalOpen} onClose={closeModal}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Apply for {selectedJob?.jobTitle}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel>Applicant Name</FormLabel>
+                <Input value={applicantName} onChange={(e) => setApplicantName(e.target.value)} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Email</FormLabel>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Phone Number</FormLabel>
+                <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Resume</FormLabel>
+                <Input type="file" onChange={(e) => setResume(e.target.files[0])} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Cover Letter</FormLabel>
+                <Textarea value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" mr={3} onClick={handleSubmit}>Submit Application</Button>
+            <Button variant="ghost" onClick={closeModal}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Footer */}
       <Box bg="gray.800" color="white" py="6">
